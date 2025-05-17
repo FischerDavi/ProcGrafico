@@ -40,6 +40,7 @@ set(EXERCISES
     Ex1Parte2M2
     EX5triangulos
     EXCliqueTriangulo
+    GBAV1Davi
 )
 
 add_compile_options(-Wno-pragmas)
