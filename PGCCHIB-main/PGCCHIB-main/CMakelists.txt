@@ -41,6 +41,8 @@ set(EXERCISES
     EX5triangulos
     EXCliqueTriangulo
     GBAV1Davi
+    jogoDasCores
+    jogoDasCoresV2
 )
 
 add_compile_options(-Wno-pragmas)
