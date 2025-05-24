@@ -11,3 +11,5 @@ Para a entrega do módulo 2, separei dois exercícios, EX5triangulos.cpp para o 
 Também ja deixei os nomes dos exercícios adicionado ao CMakeLists.txt.
 
 Para a entrega da primeira atividade vivencial (Módulo 2), o exercício tem o nome de GBAV1Davi.cpp e também pode ser encontrado dentro da pasta src, e o executável na pasta build.
+
+Para a entrega do jogo das cores (Módulo 3), o exercício tem o nome de jogoDasCoresV2.cpp e também pode ser encontrado dentro da pasta src, e o executável na pasta build. Em caso de algum problema, fiz tambem o código jogoDasCores.cpp usando glColor e glVertex como backup.
