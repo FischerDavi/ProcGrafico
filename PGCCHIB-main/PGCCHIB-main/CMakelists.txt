@@ -43,6 +43,7 @@ set(EXERCISES
     GBAV1Davi
     jogoDasCores
     jogoDasCoresV2
+    cenaSprites
 )
 
 add_compile_options(-Wno-pragmas)
