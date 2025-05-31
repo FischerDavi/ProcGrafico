@@ -44,6 +44,7 @@ set(EXERCISES
     jogoDasCores
     jogoDasCoresV2
     cenaSprites
+    parallaxScrolling
 )
 
 add_compile_options(-Wno-pragmas)

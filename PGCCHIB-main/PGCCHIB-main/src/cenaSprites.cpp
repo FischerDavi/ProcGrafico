@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <vector>
+#include <string>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -40,7 +41,6 @@ void main()
 }
 )";
 
-// Shader Compilation
 GLuint createShaderProgram() {
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -83,7 +83,6 @@ GLuint createShaderProgram() {
     return shaderProgram;
 }
 
-// Carregar textura
 GLuint loadTexture(const char* path) {
     GLuint textureID;
     glGenTextures(1, &textureID);
@@ -97,9 +96,9 @@ GLuint loadTexture(const char* path) {
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);  
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     } else {
         std::cout << "Failed to load texture" << std::endl;
@@ -115,10 +114,11 @@ struct Sprite {
     glm::vec2 uvMin, uvMax;
     GLuint textureID;
     GLuint shaderProgram;
+    bool visible;
 
     Sprite(GLuint shaderProgram, GLuint textureID, glm::vec2 uvMin, glm::vec2 uvMax)
         : shaderProgram(shaderProgram), textureID(textureID), uvMin(uvMin), uvMax(uvMax),
-          position(0.0f), scale(1.0f), rotation(0.0f)
+          position(0.0f), scale(1.0f), rotation(0.0f), visible(true)
     {
         setupSprite();
     }
@@ -137,7 +137,6 @@ struct Sprite {
         glGenBuffers(1, &EBO);
 
         glBindVertexArray(VAO);
-
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
@@ -154,6 +153,8 @@ struct Sprite {
     }
 
     void draw(glm::mat4& projection) {
+        if (!visible) return;
+
         glUseProgram(shaderProgram);
 
         glm::mat4 model = glm::mat4(1.0f);
@@ -182,7 +183,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Sprite House Example", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(800, 600, "Sprite Control", NULL, NULL);
     if (!window) {
         std::cout << "Failed to create GLFW window\n";
         glfwTerminate();
@@ -193,90 +194,37 @@ int main()
         std::cout << "Failed to initialize GLAD\n";
         return -1;
     }
-
     glViewport(0, 0, 800, 600);
-
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    stbi_set_flip_vertically_on_load(true);  // Inverter textura na carga
+    stbi_set_flip_vertically_on_load(true);
 
     GLuint shaderProgram = createShaderProgram();
-    GLuint bgTextureID = loadTexture("C:/Users/I588364/OneDrive - SAP SE/PG/PGCCHIB-main/PGCCHIB-main/include/8bitLib/PNG/grass.png");
-    glm::vec2 uv_min_bg(0.0f, 0.0f);
-    glm::vec2 uv_max_bg(1.0f, 1.0f);
-    Sprite background(shaderProgram, bgTextureID, uv_min_bg, uv_max_bg);
-    background.position = glm::vec2(400.0f, 300.0f);
-    background.scale = glm::vec2(800.0f, 600.0f);
-
-    GLuint shaderProgram2 = createShaderProgram();
+    GLuint textureBG = loadTexture("C:/Users/I588364/OneDrive - SAP SE/PG/PGCCHIB-main/PGCCHIB-main/include/8bitLib/PNG/grass.png");
     GLuint textureID = loadTexture("C:/Users/I588364/OneDrive - SAP SE/PG/PGCCHIB-main/PGCCHIB-main/include/8bitLib/PNG/exterior.png");
 
     glm::mat4 projection = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f);
 
-    float textureWidth = 240.0f;
-    float textureHeight = 800.0f;
+    Sprite background(shaderProgram, textureBG, glm::vec2(0,0), glm::vec2(1,1));
+    background.position = glm::vec2(400, 300);
+    background.scale = glm::vec2(800, 600);
 
-    float x1 = 0.0f, y1 = 0.0f, width1 = 145.0f, height1 = 128.0f;
+    std::vector<std::pair<std::string, Sprite>> sprites;
 
-    glm::vec2 uv_min(x1 / textureWidth, 1.0f - (y1 + height1) / textureHeight);
-    glm::vec2 uv_max((x1 + width1) / textureWidth, 1.0f - y1 / textureHeight);
+    // Adesivos:
+    auto add_sprite = [&](const std::string& name, float x, float y, float w, float h, float posX, float posY) {
+        glm::vec2 uv_min(x/240.0f, 1.0f - (y+h)/800.0f);
+        glm::vec2 uv_max((x+w)/240.0f, 1.0f - y/800.0f);
+        Sprite spr(shaderProgram, textureID, uv_min, uv_max);
+        spr.position = glm::vec2(posX, posY);
+        spr.scale = glm::vec2(w*2, h*2);
+        sprites.push_back({name, spr});
+    };
 
-    Sprite houseSprite(shaderProgram2, textureID, uv_min, uv_max);
-
-    houseSprite.position = glm::vec2(400.0f, 300.0f); // centro da janela
-    houseSprite.scale = glm::vec2(width1*2, height1*2);     // tamanho real da casa em pixels
-
-    GLuint shaderProgram3 = createShaderProgram();
-
-    glm::mat4 projection2 = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f);
-
-    float textureWidth2 = 240.0f;
-    float textureHeight2 = 800.0f;
-
-    float x2 = 0.0f, y2 = 315.0f, width2 = 61.0f, height2 = 79.0f;
-
-    glm::vec2 uv_min2(x2 / textureWidth2, 1.0f - (y2 + height2) / textureHeight2);
-    glm::vec2 uv_max2((x2 + width2) / textureWidth2, 1.0f - y2 / textureHeight2);
-
-    Sprite treeSprite(shaderProgram3, textureID, uv_min2, uv_max2);
-
-    treeSprite.position = glm::vec2(200.0f, 250.0f); 
-    treeSprite.scale = glm::vec2(width2*2, height2*2);
-
-    GLuint shaderProgram4 = createShaderProgram();
-
-    glm::mat4 projection3 = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f);
-
-    float textureWidth3 = 240.0f;
-    float textureHeight3 = 800.0f;
-
-    float x3 = 160.0f, y3 = 0.0f, width3 = 39.0f, height3 = 64.0f;
-
-    glm::vec2 uv_min3(x3 / textureWidth3, 1.0f - (y3 + height3) / textureHeight3);
-    glm::vec2 uv_max3((x3 + width3) / textureWidth3, 1.0f - y3 / textureHeight3);
-
-    Sprite fenceSprite(shaderProgram4, textureID, uv_min3, uv_max3);
-
-    fenceSprite.position = glm::vec2(600.0f, 100.0f); 
-    fenceSprite.scale = glm::vec2(width3*2, height3*2);
-
-    GLuint shaderProgram5 = createShaderProgram();
-
-    glm::mat4 projection4 = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f);
-
-    float textureWidth4 = 240.0f;
-    float textureHeight4 = 800.0f;
-
-    float x4 = 0.0f, y4 = 542.0f, width4 = 58.0f, height4 = 61.0f;
-
-    glm::vec2 uv_min4(x4 / textureWidth4, 1.0f - (y4 + height4) / textureHeight4);
-    glm::vec2 uv_max4((x4 + width4) / textureWidth4, 1.0f - y4 / textureHeight4);
-
-    Sprite scarecrowSprite(shaderProgram5, textureID, uv_min4, uv_max4);
-
-    scarecrowSprite.position = glm::vec2(550.0f, 500.0f); 
-    scarecrowSprite.scale = glm::vec2(width4*2, height4*2);
+    add_sprite("house", 0, 0, 145, 128, 400, 300);
+    add_sprite("tree", 0, 315, 61, 79, 200, 250);
+    add_sprite("fence", 160, 0, 39, 64, 600, 100);
+    add_sprite("scarecrow", 0, 542, 58, 61, 550, 500);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -284,15 +232,36 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         background.draw(projection);
-        houseSprite.draw(projection);
-        treeSprite.draw(projection2);
-        fenceSprite.draw(projection3);
-        scarecrowSprite.draw(projection4);
+        for (auto& sp : sprites) sp.second.draw(projection);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-    }
 
+        // Terminal control
+        std::cout << "\nAvailable sprites:\n";
+        for (auto& sp : sprites) {
+            std::cout << sp.first << " (visible: " << (sp.second.visible ? "yes" : "no") << ", scale: "
+                      << sp.second.scale.x << ")\n";
+        }
+        std::cout << "Enter sprite name to toggle/scale (or 'skip'):\n";
+        std::string input;
+        std::cin >> input;
+        if (input == "skip") continue;
+
+        for (auto& sp : sprites) {
+            if (sp.first == input) {
+                std::cout << "1) Toggle visibility\n2) Change scale\nChoice: ";
+                int choice; std::cin >> choice;
+                if (choice == 1) {
+                    sp.second.visible = !sp.second.visible;
+                } else if (choice == 2) {
+                    std::cout << "Enter new scale factor (0.1 - 2.0): ";
+                    float scale; std::cin >> scale;
+                    sp.second.scale = glm::vec2(sp.second.scale.x * scale, sp.second.scale.y * scale);
+                }
+            }
+        }
+    }
     glfwTerminate();
     return 0;
 }
