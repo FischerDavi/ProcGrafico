@@ -18,3 +18,5 @@ Para a entrega da cena com sprites (Módulo 4), o exercício é cenaSprites.cpp.
 Ao abrir a cena, os sprites vao ter seus nomes listados, e você pode digitar o nome deles no terminal para adicionar/remover, ou mudar a escala dele digitando um número entre 0.1 e 2.
 
 Entrega da Atividade Vivencial 2 (Módulo 4) tem o nome de parallaxScrolling.cpp. O pacote de textura Cartoon_Forest_BG_04 pode ser encontrado dentro da pasta include e o código na pasta src.
+
+A entrega da atividade vivencial 3 + GA tem nome de tilemap.cpp e pode ser encontrada na pasta src.

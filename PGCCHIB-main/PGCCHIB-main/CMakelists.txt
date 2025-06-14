@@ -45,6 +45,9 @@ set(EXERCISES
     jogoDasCoresV2
     cenaSprites
     parallaxScrolling
+    parallaxScrollingWithHomer
+    HelloAnimatedSprite
+    tilemap
 )
 
 add_compile_options(-Wno-pragmas)
